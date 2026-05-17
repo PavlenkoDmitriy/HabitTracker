@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Habit History</title>
+  <title>Історія звичок</title>
   <style>
     :root {
       --page-bg: #0b0b0d;
@@ -270,44 +270,44 @@
 <body>
   <main class="phone">
     <div class="topbar">
-      <h1 class="brand">Habit Tracker</h1>
+      <h1 class="brand">Трекер звичок</h1>
     </div>
 
     <section class="week-header">
       <div>
-        <p class="week-title">History</p>
+        <p class="week-title">Історія</p>
         <p class="week-summary" id="week-summary"></p>
       </div>
       <div>
-        <button class="week-button" id="previous-week-button" type="button">Previous</button>
-        <button class="week-button" id="next-week-button" type="button">Next</button>
+        <button class="week-button" id="previous-week-button" type="button">Попередній</button>
+        <button class="week-button" id="next-week-button" type="button">Наступний</button>
       </div>
     </section>
 
     <section class="card graph-card">
       <p class="week-title" id="week-title"></p>
-      <svg id="history-graph" viewBox="0 0 700 240" role="img" aria-label="Weekly habit completion graph"></svg>
+      <svg id="history-graph" viewBox="0 0 700 240" role="img" aria-label="Графік виконання звичок за тиждень"></svg>
     </section>
 
     <section class="card completion-card">
-      <h2>Habit Completion</h2>
+      <h2>Виконання звичок</h2>
       <div class="completion-list" id="completion-list"></div>
-      <button class="danger-button" id="delete-all-data-button" type="button">Delete all data</button>
+      <button class="danger-button" id="delete-all-data-button" type="button">Видалити всі дані</button>
     </section>
 
     <nav class="nav">
-      <button id="nav-today-button" type="button">Today</button>
-      <button class="active" type="button">History</button>
-      <button id="nav-new-button" type="button">New</button>
+      <button id="nav-today-button" type="button">Сьогодні</button>
+      <button class="active" type="button">Історія</button>
+      <button id="nav-new-button" type="button">Нова</button>
     </nav>
   </main>
 
   <dialog id="delete-all-dialog">
-    <h2>Delete all data</h2>
-    <p>This will remove all habits and history.</p>
+    <h2>Видалити всі дані</h2>
+    <p>Це видалить усі звички та історію.</p>
     <div class="dialog-actions">
-      <button class="dialog-button" id="delete-all-cancel-button" type="button">Cancel</button>
-      <button class="dialog-button danger" id="delete-all-confirm-button" type="button">Delete</button>
+      <button class="dialog-button" id="delete-all-cancel-button" type="button">Скасувати</button>
+      <button class="dialog-button danger" id="delete-all-confirm-button" type="button">Видалити</button>
     </div>
   </dialog>
 
@@ -381,7 +381,7 @@
     }
 
     function formatShortDate(date) {
-      return date.toLocaleDateString("en-US", {
+      return date.toLocaleDateString("uk-UA", {
         month: "short",
         day: "numeric"
       });
@@ -412,7 +412,7 @@
         const percent = totalCount === 0 ? 0 : Math.min(100, Math.round((completedCount / totalCount) * 100));
 
         return {
-          label: day.toLocaleDateString("en-US", { weekday: "short" }),
+          label: day.toLocaleDateString("uk-UA", { weekday: "short" }),
           dateText: formatShortDate(day),
           completedCount: completedCount,
           totalCount: totalCount,
@@ -585,7 +585,7 @@
       const averagePercent = data.length === 0 ? 0 : Math.round(totalPercent / data.length);
 
       weekTitle.textContent = formatShortDate(weekDays[0]) + " - " + formatShortDate(weekDays[6]);
-      weekSummary.textContent = "Average completion this week: " + averagePercent + "%";
+      weekSummary.textContent = "Середнє виконання цього тижня: " + averagePercent + "%";
 
       renderGraph(data);
       renderCompletionList();
