@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Habit Tracker</title>
+  <title>Трекер звичок</title>
   <style>
     :root {
       --page-bg: #0b0b0d;
@@ -297,12 +297,12 @@
   <main class="phone">
     <section>
       <div class="topbar">
-        <h1 class="brand">Habit Tracker</h1>
+        <h1 class="brand">Трекер звичок</h1>
       </div>
 
       <section class="hero">
         <div>
-          <h2 id="view-title">Today</h2>
+          <h2 id="view-title">Сьогодні</h2>
           <p id="today-date-text"></p>
           <p id="today-summary"></p>
         </div>
@@ -315,18 +315,18 @@
     <ul class="habit-list" id="habit-list"></ul>
 
     <nav class="nav">
-      <button class="active" id="nav-today-button" type="button">Today</button>
-      <button id="nav-history-button" type="button">History</button>
-      <button id="new-button" type="button">New</button>
+      <button class="active" id="nav-today-button" type="button">Сьогодні</button>
+      <button id="nav-history-button" type="button">Історія</button>
+      <button id="new-button" type="button">Нова</button>
     </nav>
   </main>
 
   <dialog id="reminder-dialog">
-    <h2>Habit reminder</h2>
+    <h2>Нагадування про звичку</h2>
     <p id="reminder-text"></p>
     <div class="dialog-actions">
-      <button class="dialog-button" id="reminder-close-button" type="button">Close</button>
-      <button class="dialog-button primary" id="reminder-done-button" type="button">Mark done</button>
+      <button class="dialog-button" id="reminder-close-button" type="button">Закрити</button>
+      <button class="dialog-button primary" id="reminder-done-button" type="button">Позначити виконаною</button>
     </div>
   </dialog>
 
@@ -346,6 +346,8 @@
     const reminderCloseButton = document.getElementById("reminder-close-button");
     const progressRing = document.getElementById("progress-ring");
     const progressRingValue = document.getElementById("progress-ring-value");
+    const reminderStateStorageKey = "habitReminderState";
+    const reminderPollIntervalMs = 15 * 1000;
     const removedSeedHabitNames = [
       "Drink water",
       "Read 20 minutes",
@@ -354,6 +356,32 @@
     ];
     let currentView = "today";
     let activeReminderHabitId = null;
+    let reminderPollTimerId = null;
+
+    function getUnitWord(value, unit) {
+      const forms = {
+        minutes: ["хвилину", "хвилини", "хвилин"],
+        hours: ["годину", "години", "годин"],
+        days: ["день", "дні", "днів"],
+        weeks: ["тиждень", "тижні", "тижнів"]
+      };
+      const lastTwoDigits = value % 100;
+      const lastDigit = value % 10;
+
+      if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+        return forms[unit][2];
+      }
+
+      if (lastDigit === 1) {
+        return forms[unit][0];
+      }
+
+      if (lastDigit >= 2 && lastDigit <= 4) {
+        return forms[unit][1];
+      }
+
+      return forms[unit][2];
+    }
 
     function loadHabits() {
       const storedHabits = localStorage.getItem("habits");
@@ -367,14 +395,20 @@
         const filteredHabits = parsedHabits
           .filter((habit) => !removedSeedHabitNames.includes(habit.name))
           .map((habit, index) => {
-            if (habit.id) {
-              return habit;
+            const normalizedHabit = {
+              ...habit,
+              id: habit.id || "habit-" + index + "-" + habit.name.toLowerCase().replaceAll(" ", "-")
+            };
+
+            if (!normalizedHabit.createdAt) {
+              normalizedHabit.createdAt = Date.now();
             }
 
-            return {
-              ...habit,
-              id: "habit-" + index + "-" + habit.name.toLowerCase().replaceAll(" ", "-")
-            };
+            if (!normalizedHabit.reminderStartAt) {
+              normalizedHabit.reminderStartAt = normalizedHabit.createdAt;
+            }
+
+            return normalizedHabit;
           });
 
         if (JSON.stringify(filteredHabits) !== JSON.stringify(parsedHabits)) {
@@ -403,6 +437,24 @@
       } catch (error) {
         return {};
       }
+    }
+
+    function loadReminderState() {
+      const storedReminderState = localStorage.getItem(reminderStateStorageKey);
+
+      if (!storedReminderState) {
+        return {};
+      }
+
+      try {
+        return JSON.parse(storedReminderState);
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveReminderState(reminderState) {
+      localStorage.setItem(reminderStateStorageKey, JSON.stringify(reminderState));
     }
 
     function isHabitDoneToday(habitId) {
@@ -468,11 +520,11 @@
 
     function getFrequencyText(habit) {
       if (habit.frequencyValue && habit.frequencyUnit) {
-        return "Every " + habit.frequencyValue + " " + habit.frequencyUnit;
+        return "Кожні " + habit.frequencyValue + " " + getUnitWord(habit.frequencyValue, habit.frequencyUnit);
       }
 
       if (habit.days && habit.days.length > 0) {
-        return "Days: " + habit.days.join(", ");
+        return "Дні: " + habit.days.join(", ");
       }
 
       return "";
@@ -491,7 +543,7 @@
     }
 
     function getTodayDateText() {
-      return new Date().toLocaleDateString("en-US", {
+      return new Date().toLocaleDateString("uk-UA", {
         year: "numeric",
         month: "long",
         day: "numeric"
@@ -538,7 +590,7 @@
 
     function renderTodaySummary(list) {
       if (currentView !== "today") {
-        todayDateText.textContent = "Your habits";
+        todayDateText.textContent = "Ваші звички";
         todaySummary.textContent = "";
         updateProgress(0);
         return;
@@ -549,7 +601,7 @@
       const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
 
       todayDateText.textContent = getTodayDateText();
-      todaySummary.textContent = completedCount + "/" + totalCount + " habits";
+      todaySummary.textContent = completedCount + "/" + totalCount + " звичок";
       updateProgress(percent);
     }
 
@@ -569,7 +621,7 @@
         gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.6);
         oscillator.stop(audioContext.currentTime + 0.6);
       } catch (error) {
-        console.error("Could not play reminder sound.", error);
+        console.error("Не вдалося відтворити звук нагадування.", error);
       }
     }
 
@@ -579,13 +631,69 @@
       }
 
       activeReminderHabitId = habit.id;
-      reminderText.textContent = habit.name + " - " + getFrequencyText(habit);
+      reminderText.textContent = habit.name + " • " + getFrequencyText(habit);
 
       if (!reminderDialog.open) {
         reminderDialog.showModal();
       }
 
       playReminderSound();
+    }
+
+    function getReminderAnchor(habit) {
+      if (typeof habit.reminderStartAt === "number") {
+        return habit.reminderStartAt;
+      }
+
+      if (typeof habit.createdAt === "number") {
+        return habit.createdAt;
+      }
+
+      return Date.now();
+    }
+
+    function checkHabitReminders() {
+      const habits = loadHabits();
+      const reminderState = loadReminderState();
+      const now = Date.now();
+      let stateChanged = false;
+
+      habits.forEach((habit) => {
+        const intervalMs = getMillisecondsForHabit(habit);
+
+        if (!intervalMs) {
+          return;
+        }
+
+        const anchor = getReminderAnchor(habit);
+        const elapsedMs = now - anchor;
+
+        if (elapsedMs < intervalMs) {
+          return;
+        }
+
+        const currentCycle = Math.floor(elapsedMs / intervalMs);
+        const previousCycle = reminderState[habit.id];
+
+        if (previousCycle === currentCycle) {
+          return;
+        }
+
+        reminderState[habit.id] = currentCycle;
+        stateChanged = true;
+        showReminder(habit);
+      });
+
+      Object.keys(reminderState).forEach((habitId) => {
+        if (!habits.some((habit) => habit.id === habitId)) {
+          delete reminderState[habitId];
+          stateChanged = true;
+        }
+      });
+
+      if (stateChanged) {
+        saveReminderState(reminderState);
+      }
     }
 
     function renderCurrentView() {
@@ -595,30 +703,19 @@
         ? habits.filter((habit) => isHabitForToday(habit, todayName))
         : habits;
 
-      viewTitle.textContent = currentView === "today" ? "Today" : "All habits";
+      viewTitle.textContent = currentView === "today" ? "Сьогодні" : "Усі звички";
       renderHabits(visibleHabits);
       renderTodaySummary(visibleHabits);
       navTodayButton.classList.toggle("active", currentView === "today");
     }
 
     function startHabitReminders() {
-      const habits = loadHabits();
+      if (reminderPollTimerId) {
+        window.clearInterval(reminderPollTimerId);
+      }
 
-      habits.forEach((habit) => {
-        const intervalMs = getMillisecondsForHabit(habit);
-
-        if (!intervalMs) {
-          return;
-        }
-
-        window.setTimeout(() => {
-          showReminder(habit);
-
-          window.setInterval(() => {
-            showReminder(habit);
-          }, intervalMs);
-        }, intervalMs);
-      });
+      checkHabitReminders();
+      reminderPollTimerId = window.setInterval(checkHabitReminders, reminderPollIntervalMs);
     }
 
     function renderHabits(list) {
@@ -627,7 +724,7 @@
       if (list.length === 0) {
         const emptyItem = document.createElement("li");
         emptyItem.className = "empty-state";
-        emptyItem.textContent = currentView === "today" ? "No habits for today." : "No Habit created";
+        emptyItem.textContent = currentView === "today" ? "На сьогодні звичок немає." : "Ще не створено жодної звички.";
         habitList.appendChild(emptyItem);
         return;
       }
