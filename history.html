@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habit History</title>
+  <style>
+    :root {
+      --page-bg: #0b0b0d;
+      --screen-bg: #f7f7f6;
+      --card-bg: #fffdfa;
+      --text: #323641;
+      --muted: #596063;
+      --accent: #6666b8;
+      --grid: #c4c5e7;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background:
+        linear-gradient(
+          90deg,
+          #cfd4db 0,
+          #cfd4db calc(50% - min(380px, 50vw)),
+          var(--screen-bg) calc(50% - min(380px, 50vw)),
+          var(--screen-bg) calc(50% + min(380px, 50vw)),
+          #cfd4db calc(50% + min(380px, 50vw)),
+          #cfd4db 100%
+        );
+      overscroll-behavior-y: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: transparent;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      padding: 0;
+      overscroll-behavior-y: none;
+    }
+
+    .phone {
+      width: min(760px, 100vw);
+      min-height: 100vh;
+      background: var(--screen-bg);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 28px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .topbar,
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .week-button,
+    .nav button {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .week-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .week-title {
+      margin: 0;
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .week-summary {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .week-button {
+      background: #ffffff;
+      color: var(--accent);
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+
+    .week-button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 34px;
+      padding: 18px 16px 14px;
+      box-shadow: 0 6px 20px rgba(102, 102, 184, 0.05);
+    }
+
+    .graph-card {
+      padding-top: 10px;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .completion-card h2 {
+      margin: 0 0 16px;
+      font-size: 26px;
+    }
+
+    .danger-button {
+      width: 100%;
+      margin-top: 16px;
+      border: 0;
+      border-radius: 24px;
+      padding: 14px 18px;
+      background: #f3e2e2;
+      color: #a74f4f;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    dialog {
+      border: 0;
+      border-radius: 28px;
+      padding: 24px;
+      width: min(92vw, 360px);
+      background: #ffffff;
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(8, 9, 15, 0.42);
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    .dialog-button {
+      border: 0;
+      border-radius: 18px;
+      padding: 12px 16px;
+      background: #eef0ff;
+      color: var(--accent);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .dialog-button.danger {
+      background: #a74f4f;
+      color: #ffffff;
+    }
+
+    .completion-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .completion-item {
+      display: grid;
+      grid-template-columns: 46px 1fr 48px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .completion-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      font-size: 20px;
+    }
+
+    .completion-name {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .completion-track {
+      width: 100%;
+      height: 16px;
+      border-radius: 999px;
+      background: #eceef3;
+      overflow: hidden;
+    }
+
+    .completion-fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .completion-value {
+      text-align: right;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .nav {
+      margin-top: auto;
+      background: #ffffff;
+      border-radius: 30px;
+      padding: 12px 18px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+    }
+
+    .nav button {
+      width: 32%;
+      padding: 8px 0;
+      color: #575f64;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .nav button.active {
+      color: var(--accent);
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+      }
+
+      .phone {
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <div class="topbar">
+      <h1 class="brand">Habit Tracker</h1>
+    </div>
+
+    <section class="week-header">
+      <div>
+        <p class="week-title">History</p>
+        <p class="week-summary" id="week-summary"></p>
+      </div>
+      <div>
+        <button class="week-button" id="previous-week-button" type="button">Previous</button>
+        <button class="week-button" id="next-week-button" type="button">Next</button>
+      </div>
+    </section>
+
+    <section class="card graph-card">
+      <p class="week-title" id="week-title"></p>
+      <svg id="history-graph" viewBox="0 0 700 240" role="img" aria-label="Weekly habit completion graph"></svg>
+    </section>
+
+    <section class="card completion-card">
+      <h2>Habit Completion</h2>
+      <div class="completion-list" id="completion-list"></div>
+      <button class="danger-button" id="delete-all-data-button" type="button">Delete all data</button>
+    </section>
+
+    <nav class="nav">
+      <button id="nav-today-button" type="button">Today</button>
+      <button class="active" type="button">History</button>
+      <button id="nav-new-button" type="button">New</button>
+    </nav>
+  </main>
+
+  <dialog id="delete-all-dialog">
+    <h2>Delete all data</h2>
+    <p>This will remove all habits and history.</p>
+    <div class="dialog-actions">
+      <button class="dialog-button" id="delete-all-cancel-button" type="button">Cancel</button>
+      <button class="dialog-button danger" id="delete-all-confirm-button" type="button">Delete</button>
+    </div>
+  </dialog>
+
+  <script>
+    const removedSeedHabitNames = [
+      "Drink water",
+      "Read 20 minutes",
+      "Workout",
+      "Plan the day"
+    ];
+    const previousWeekButton = document.getElementById("previous-week-button");
+    const nextWeekButton = document.getElementById("next-week-button");
+    const completionList = document.getElementById("completion-list");
+    const deleteAllDataButton = document.getElementById("delete-all-data-button");
+    const deleteAllDialog = document.getElementById("delete-all-dialog");
+    const deleteAllCancelButton = document.getElementById("delete-all-cancel-button");
+    const deleteAllConfirmButton = document.getElementById("delete-all-confirm-button");
+    let weekOffset = 0;
+
+    function loadHabits() {
+      const storedHabits = localStorage.getItem("habits");
+
+      if (!storedHabits) {
+        return [];
+      }
+
+      try {
+        return JSON.parse(storedHabits).filter((habit) => !removedSeedHabitNames.includes(habit.name));
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function loadDoneHabits() {
+      const storedDoneHabits = localStorage.getItem("doneHabits");
+
+      if (!storedDoneHabits) {
+        return {};
+      }
+
+      try {
+        return JSON.parse(storedDoneHabits);
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function getMondayOfCurrentWeek() {
+      const today = new Date();
+      const dayNumber = today.getDay();
+      const mondayOffset = dayNumber === 0 ? -6 : 1 - dayNumber;
+      const monday = new Date(today);
+
+      monday.setDate(today.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    }
+
+    function getMondayForOffset(offset) {
+      const monday = getMondayOfCurrentWeek();
+      monday.setDate(monday.getDate() + offset * 7);
+      return monday;
+    }
+
+    function formatDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return year + "-" + month + "-" + day;
+    }
+
+    function formatShortDate(date) {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function getWeekDays(offset) {
+      const monday = getMondayForOffset(offset);
+      const days = [];
+
+      for (let index = 0; index < 7; index += 1) {
+        const day = new Date(monday);
+        day.setDate(monday.getDate() + index);
+        days.push(day);
+      }
+
+      return days;
+    }
+
+    function getDailyCompletionData(offset) {
+      const habits = loadHabits();
+      const doneHabits = loadDoneHabits();
+      const weekDays = getWeekDays(offset);
+
+      return weekDays.map((day) => {
+        const dateKey = formatDateKey(day);
+        const completedCount = doneHabits[dateKey] ? doneHabits[dateKey].length : 0;
+        const totalCount = habits.length;
+        const percent = totalCount === 0 ? 0 : Math.min(100, Math.round((completedCount / totalCount) * 100));
+
+        return {
+          label: day.toLocaleDateString("en-US", { weekday: "short" }),
+          dateText: formatShortDate(day),
+          completedCount: completedCount,
+          totalCount: totalCount,
+          percent: percent
+        };
+      });
+    }
+
+    function getHabitColor(habit) {
+      const iconColors = {
+        "💧": "#69c98d",
+        "💪": "#ffbe4a",
+        "📚": "#918dce",
+        "🧘": "#619bd3",
+        "🍎": "#fb7f97",
+        "📝": "#ff9032"
+      };
+
+      return iconColors[habit.icon] || "#9aacb8";
+    }
+
+    function createSvgNode(name, attributes) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+
+      Object.keys(attributes).forEach((key) => {
+        node.setAttribute(key, String(attributes[key]));
+      });
+
+      return node;
+    }
+
+    function renderGraph(data) {
+      const svg = document.getElementById("history-graph");
+      svg.innerHTML = "";
+
+      const width = 700;
+      const height = 240;
+      const left = 74;
+      const right = 42;
+      const top = 18;
+      const bottom = 44;
+      const chartWidth = width - left - right;
+      const chartHeight = height - top - bottom;
+      const stepX = chartWidth / 6;
+      const barWidth = 28;
+      const currentDayIndex = weekOffset === 0 ? (() => {
+        const today = new Date().getDay();
+        return today === 0 ? 6 : today - 1;
+      })() : -1;
+
+      [0, 25, 50, 75, 100].forEach((tick) => {
+        const y = top + chartHeight - (tick / 100) * chartHeight;
+        const line = createSvgNode("line", {
+          x1: left,
+          y1: y,
+          x2: width - right,
+          y2: y,
+          stroke: "#c9caeb",
+          "stroke-width": 2
+        });
+        const label = createSvgNode("text", {
+          x: left - 10,
+          y: y + 4,
+          "text-anchor": "end",
+          fill: "#4f5659",
+          "font-size": "16"
+        });
+
+        label.textContent = tick + "%";
+        svg.appendChild(line);
+        svg.appendChild(label);
+      });
+
+      data.forEach((entry, index) => {
+        const x = left + index * stepX;
+        const barHeight = (entry.percent / 100) * chartHeight;
+        const y = top + chartHeight - barHeight;
+        const bar = createSvgNode("rect", {
+          x: x - (barWidth / 2),
+          y: y,
+          width: barWidth,
+          height: barHeight,
+          rx: 6,
+          fill: index === currentDayIndex ? "#6666b8" : "#bebbe0"
+        });
+        const dayLabel = createSvgNode("text", {
+          x: x,
+          y: height - 22,
+          "text-anchor": "middle",
+          fill: "#4f5659",
+          "font-size": "15"
+        });
+        const dateLabel = createSvgNode("text", {
+          x: x,
+          y: height - 7,
+          "text-anchor": "middle",
+          fill: "#9097a1",
+          "font-size": "12"
+        });
+
+        dayLabel.textContent = entry.label;
+        dateLabel.textContent = entry.dateText;
+
+        svg.appendChild(bar);
+        svg.appendChild(dayLabel);
+        svg.appendChild(dateLabel);
+      });
+    }
+
+    function renderCompletionList() {
+      const habits = loadHabits();
+      const doneHabits = loadDoneHabits();
+      const days = Object.keys(doneHabits);
+
+      completionList.innerHTML = "";
+
+      habits.forEach((habit) => {
+        let completedDays = 0;
+
+        days.forEach((day) => {
+          if (doneHabits[day].includes(habit.id)) {
+            completedDays += 1;
+          }
+        });
+
+        const totalDays = days.length === 0 ? 1 : days.length;
+        const percent = Math.round((completedDays / totalDays) * 100);
+        const item = document.createElement("div");
+        const icon = document.createElement("div");
+        const body = document.createElement("div");
+        const name = document.createElement("p");
+        const track = document.createElement("div");
+        const fill = document.createElement("div");
+        const value = document.createElement("div");
+
+        item.className = "completion-item";
+        icon.className = "completion-icon";
+        icon.style.background = getHabitColor(habit);
+        icon.textContent = habit.icon || "★";
+        body.className = "completion-body";
+        name.className = "completion-name";
+        name.textContent = habit.name;
+        track.className = "completion-track";
+        fill.className = "completion-fill";
+        fill.style.width = percent + "%";
+        fill.style.background = getHabitColor(habit);
+        value.className = "completion-value";
+        value.textContent = percent + "%";
+
+        track.appendChild(fill);
+        body.appendChild(name);
+        body.appendChild(track);
+        item.appendChild(icon);
+        item.appendChild(body);
+        item.appendChild(value);
+        completionList.appendChild(item);
+      });
+    }
+
+    function updateWeekButtons() {
+      nextWeekButton.disabled = weekOffset >= 0;
+    }
+
+    function renderHistory() {
+      const data = getDailyCompletionData(weekOffset);
+      const weekDays = getWeekDays(weekOffset);
+      const weekTitle = document.getElementById("week-title");
+      const weekSummary = document.getElementById("week-summary");
+      const totalPercent = data.reduce((sum, entry) => sum + entry.percent, 0);
+      const averagePercent = data.length === 0 ? 0 : Math.round(totalPercent / data.length);
+
+      weekTitle.textContent = formatShortDate(weekDays[0]) + " - " + formatShortDate(weekDays[6]);
+      weekSummary.textContent = "Average completion this week: " + averagePercent + "%";
+
+      renderGraph(data);
+      renderCompletionList();
+      updateWeekButtons();
+    }
+
+    previousWeekButton.addEventListener("click", () => {
+      weekOffset -= 1;
+      renderHistory();
+    });
+
+    nextWeekButton.addEventListener("click", () => {
+      if (weekOffset >= 0) {
+        return;
+      }
+
+      weekOffset += 1;
+      renderHistory();
+    });
+
+    document.getElementById("nav-today-button").addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    document.getElementById("nav-new-button").addEventListener("click", () => {
+      window.location.href = "new.html";
+    });
+
+    deleteAllDataButton.addEventListener("click", () => {
+      if (!deleteAllDialog.open) {
+        deleteAllDialog.showModal();
+      }
+    });
+
+    deleteAllCancelButton.addEventListener("click", () => {
+      deleteAllDialog.close();
+    });
+
+    deleteAllConfirmButton.addEventListener("click", () => {
+      localStorage.removeItem("habits");
+      localStorage.removeItem("doneHabits");
+      weekOffset = 0;
+      deleteAllDialog.close();
+      renderHistory();
+    });
+
+    renderHistory();
+  </script>
+</body>
+</html>

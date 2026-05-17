@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habit Tracker</title>
+  <style>
+    :root {
+      --page-bg: #0b0b0d;
+      --screen-bg: #f7f7f6;
+      --card-bg: #fffdfa;
+      --text: #323641;
+      --muted: #72829b;
+      --accent: #6666b8;
+      --track: #d4d7db;
+      --success: #45b266;
+      --outline: #1d1e21;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background:
+        linear-gradient(
+          90deg,
+          #cfd4db 0,
+          #cfd4db calc(50% - min(380px, 50vw)),
+          var(--screen-bg) calc(50% - min(380px, 50vw)),
+          var(--screen-bg) calc(50% + min(380px, 50vw)),
+          #cfd4db calc(50% + min(380px, 50vw)),
+          #cfd4db 100%
+        );
+      overscroll-behavior-y: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: transparent;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      padding: 0;
+      overscroll-behavior-y: none;
+    }
+
+    .phone {
+      width: min(760px, 100vw);
+      min-height: 100vh;
+      background: var(--screen-bg);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 28px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 16px;
+    }
+
+    .topbar,
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .nav button,
+    .habit-text-button,
+    .dialog-button {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .hero h2 {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 28px;
+    }
+
+    .hero p {
+      margin: 6px 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .progress-ring {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      position: relative;
+      background: conic-gradient(var(--accent) 0deg, var(--accent) 0deg, #b8bebd 0deg, #b8bebd 360deg);
+      flex-shrink: 0;
+    }
+
+    .progress-ring::before {
+      content: "";
+      width: 74px;
+      height: 74px;
+      background: var(--screen-bg);
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    .progress-ring-value {
+      position: relative;
+      z-index: 1;
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .habit-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .habit-card {
+      background: var(--card-bg);
+      border-radius: 30px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 6px 20px rgba(102, 102, 184, 0.05);
+    }
+
+    .habit-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .habit-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .habit-text-button {
+      padding: 0;
+      text-align: left;
+      width: 100%;
+    }
+
+    .habit-title {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 400;
+    }
+
+    .habit-meta {
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .habit-check {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 4px solid var(--outline);
+      background: #ffffff;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .habit-check:checked {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    .habit-check:checked::after {
+      content: "✓";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .empty-state {
+      background: var(--card-bg);
+      border-radius: 30px;
+      padding: 28px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .nav {
+      background: #ffffff;
+      border-radius: 30px;
+      padding: 12px 18px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+      margin-top: auto;
+    }
+
+    .nav button {
+      width: 32%;
+      padding: 8px 0;
+      color: #575f64;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .nav button.active {
+      color: var(--accent);
+    }
+
+    dialog {
+      border: 0;
+      border-radius: 28px;
+      padding: 24px;
+      width: min(92vw, 360px);
+      background: #ffffff;
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(8, 9, 15, 0.42);
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    .dialog-button {
+      border-radius: 18px;
+      padding: 12px 16px;
+      background: #eef0ff;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .dialog-button.primary {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+      }
+
+      .phone {
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <section>
+      <div class="topbar">
+        <h1 class="brand">Habit Tracker</h1>
+      </div>
+
+      <section class="hero">
+        <div>
+          <h2 id="view-title">Today</h2>
+          <p id="today-date-text"></p>
+          <p id="today-summary"></p>
+        </div>
+        <div class="progress-ring" id="progress-ring">
+          <span class="progress-ring-value" id="progress-ring-value">0%</span>
+        </div>
+      </section>
+    </section>
+
+    <ul class="habit-list" id="habit-list"></ul>
+
+    <nav class="nav">
+      <button class="active" id="nav-today-button" type="button">Today</button>
+      <button id="nav-history-button" type="button">History</button>
+      <button id="new-button" type="button">New</button>
+    </nav>
+  </main>
+
+  <dialog id="reminder-dialog">
+    <h2>Habit reminder</h2>
+    <p id="reminder-text"></p>
+    <div class="dialog-actions">
+      <button class="dialog-button" id="reminder-close-button" type="button">Close</button>
+      <button class="dialog-button primary" id="reminder-done-button" type="button">Mark done</button>
+    </div>
+  </dialog>
+
+  <script>
+    const defaultHabits = [];
+
+    const habitList = document.getElementById("habit-list");
+    const viewTitle = document.getElementById("view-title");
+    const todayDateText = document.getElementById("today-date-text");
+    const todaySummary = document.getElementById("today-summary");
+    const navTodayButton = document.getElementById("nav-today-button");
+    const navHistoryButton = document.getElementById("nav-history-button");
+    const newButton = document.getElementById("new-button");
+    const reminderDialog = document.getElementById("reminder-dialog");
+    const reminderText = document.getElementById("reminder-text");
+    const reminderDoneButton = document.getElementById("reminder-done-button");
+    const reminderCloseButton = document.getElementById("reminder-close-button");
+    const progressRing = document.getElementById("progress-ring");
+    const progressRingValue = document.getElementById("progress-ring-value");
+    const removedSeedHabitNames = [
+      "Drink water",
+      "Read 20 minutes",
+      "Workout",
+      "Plan the day"
+    ];
+    let currentView = "today";
+    let activeReminderHabitId = null;
+
+    function loadHabits() {
+      const storedHabits = localStorage.getItem("habits");
+
+      if (!storedHabits) {
+        return defaultHabits;
+      }
+
+      try {
+        const parsedHabits = JSON.parse(storedHabits);
+        const filteredHabits = parsedHabits
+          .filter((habit) => !removedSeedHabitNames.includes(habit.name))
+          .map((habit, index) => {
+            if (habit.id) {
+              return habit;
+            }
+
+            return {
+              ...habit,
+              id: "habit-" + index + "-" + habit.name.toLowerCase().replaceAll(" ", "-")
+            };
+          });
+
+        if (JSON.stringify(filteredHabits) !== JSON.stringify(parsedHabits)) {
+          localStorage.setItem("habits", JSON.stringify(filteredHabits));
+        }
+
+        return filteredHabits;
+      } catch (error) {
+        return defaultHabits;
+      }
+    }
+
+    function getTodayKey() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function loadDoneHabits() {
+      const storedDoneHabits = localStorage.getItem("doneHabits");
+
+      if (!storedDoneHabits) {
+        return {};
+      }
+
+      try {
+        return JSON.parse(storedDoneHabits);
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function isHabitDoneToday(habitId) {
+      const doneHabits = loadDoneHabits();
+      const todayKey = getTodayKey();
+
+      if (!doneHabits[todayKey]) {
+        return false;
+      }
+
+      return doneHabits[todayKey].includes(habitId);
+    }
+
+    function setHabitDoneToday(habitId, isDone) {
+      const doneHabits = loadDoneHabits();
+      const todayKey = getTodayKey();
+      const todayDoneHabits = doneHabits[todayKey] ? doneHabits[todayKey] : [];
+
+      if (isDone) {
+        if (!todayDoneHabits.includes(habitId)) {
+          todayDoneHabits.push(habitId);
+        }
+      } else {
+        const habitIndex = todayDoneHabits.indexOf(habitId);
+
+        if (habitIndex >= 0) {
+          todayDoneHabits.splice(habitIndex, 1);
+        }
+      }
+
+      doneHabits[todayKey] = todayDoneHabits;
+      localStorage.setItem("doneHabits", JSON.stringify(doneHabits));
+    }
+
+    function getMillisecondsForHabit(habit) {
+      if (!habit.frequencyValue || !habit.frequencyUnit) {
+        return null;
+      }
+
+      const minute = 60 * 1000;
+      const hour = 60 * minute;
+      const day = 24 * hour;
+      const week = 7 * day;
+
+      if (habit.frequencyUnit === "minutes") {
+        return habit.frequencyValue * minute;
+      }
+
+      if (habit.frequencyUnit === "hours") {
+        return habit.frequencyValue * hour;
+      }
+
+      if (habit.frequencyUnit === "days") {
+        return habit.frequencyValue * day;
+      }
+
+      if (habit.frequencyUnit === "weeks") {
+        return habit.frequencyValue * week;
+      }
+
+      return null;
+    }
+
+    function getFrequencyText(habit) {
+      if (habit.frequencyValue && habit.frequencyUnit) {
+        return "Every " + habit.frequencyValue + " " + habit.frequencyUnit;
+      }
+
+      if (habit.days && habit.days.length > 0) {
+        return "Days: " + habit.days.join(", ");
+      }
+
+      return "";
+    }
+
+    function isHabitForToday(habit, todayName) {
+      if (habit.days && habit.days.length > 0) {
+        return habit.days.includes(todayName);
+      }
+
+      if (habit.frequencyValue && habit.frequencyUnit) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function getTodayDateText() {
+      return new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    }
+
+    function getTodayName() {
+      const dayNames = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ];
+
+      return dayNames[new Date().getDay()];
+    }
+
+    function getHabitColor(habit) {
+      const iconColors = {
+        "💧": "#69c98d",
+        "💪": "#ffbe4a",
+        "📚": "#918dce",
+        "🧘": "#619bd3",
+        "🍎": "#fb7f97",
+        "📝": "#ff9032"
+      };
+
+      return iconColors[habit.icon] || "#9aacb8";
+    }
+
+    function updateProgress(percent) {
+      const degrees = Math.round((percent / 100) * 360);
+      progressRing.style.background =
+        "conic-gradient(var(--accent) 0deg, var(--accent) " +
+        degrees +
+        "deg, #b8bebd " +
+        degrees +
+        "deg, #b8bebd 360deg)";
+      progressRingValue.textContent = percent + "%";
+    }
+
+    function renderTodaySummary(list) {
+      if (currentView !== "today") {
+        todayDateText.textContent = "Your habits";
+        todaySummary.textContent = "";
+        updateProgress(0);
+        return;
+      }
+
+      const completedCount = list.filter((habit) => isHabitDoneToday(habit.id)).length;
+      const totalCount = list.length;
+      const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+
+      todayDateText.textContent = getTodayDateText();
+      todaySummary.textContent = completedCount + "/" + totalCount + " habits";
+      updateProgress(percent);
+    }
+
+    function playReminderSound() {
+      try {
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.15;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.6);
+        oscillator.stop(audioContext.currentTime + 0.6);
+      } catch (error) {
+        console.error("Could not play reminder sound.", error);
+      }
+    }
+
+    function showReminder(habit) {
+      if (isHabitDoneToday(habit.id)) {
+        return;
+      }
+
+      activeReminderHabitId = habit.id;
+      reminderText.textContent = habit.name + " - " + getFrequencyText(habit);
+
+      if (!reminderDialog.open) {
+        reminderDialog.showModal();
+      }
+
+      playReminderSound();
+    }
+
+    function renderCurrentView() {
+      const habits = loadHabits();
+      const todayName = getTodayName();
+      const visibleHabits = currentView === "today"
+        ? habits.filter((habit) => isHabitForToday(habit, todayName))
+        : habits;
+
+      viewTitle.textContent = currentView === "today" ? "Today" : "All habits";
+      renderHabits(visibleHabits);
+      renderTodaySummary(visibleHabits);
+      navTodayButton.classList.toggle("active", currentView === "today");
+    }
+
+    function startHabitReminders() {
+      const habits = loadHabits();
+
+      habits.forEach((habit) => {
+        const intervalMs = getMillisecondsForHabit(habit);
+
+        if (!intervalMs) {
+          return;
+        }
+
+        window.setTimeout(() => {
+          showReminder(habit);
+
+          window.setInterval(() => {
+            showReminder(habit);
+          }, intervalMs);
+        }, intervalMs);
+      });
+    }
+
+    function renderHabits(list) {
+      habitList.innerHTML = "";
+
+      if (list.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.className = "empty-state";
+        emptyItem.textContent = currentView === "today" ? "No habits for today." : "No Habit created";
+        habitList.appendChild(emptyItem);
+        return;
+      }
+
+      list.forEach((habit) => {
+        const item = document.createElement("li");
+        const icon = document.createElement("div");
+        const content = document.createElement("div");
+        const editButton = document.createElement("button");
+        const title = document.createElement("p");
+        const meta = document.createElement("p");
+        const checkbox = document.createElement("input");
+
+        item.className = "habit-card";
+        icon.className = "habit-icon";
+        icon.style.background = getHabitColor(habit);
+        icon.textContent = habit.icon || "★";
+
+        content.className = "habit-content";
+        editButton.className = "habit-text-button";
+        editButton.type = "button";
+        editButton.addEventListener("click", () => {
+          window.location.href = "new.html?id=" + encodeURIComponent(habit.id);
+        });
+
+        title.className = "habit-title";
+        title.textContent = habit.name;
+
+        meta.className = "habit-meta";
+        meta.textContent = habit.description || getFrequencyText(habit);
+
+        checkbox.type = "checkbox";
+        checkbox.className = "habit-check";
+        checkbox.checked = isHabitDoneToday(habit.id);
+        checkbox.addEventListener("change", () => {
+          setHabitDoneToday(habit.id, checkbox.checked);
+          renderCurrentView();
+
+          if (checkbox.checked && activeReminderHabitId === habit.id && reminderDialog.open) {
+            reminderDialog.close();
+          }
+        });
+
+        editButton.appendChild(title);
+        editButton.appendChild(meta);
+        content.appendChild(editButton);
+        item.appendChild(icon);
+        item.appendChild(content);
+        item.appendChild(checkbox);
+        habitList.appendChild(item);
+      });
+    }
+
+    navTodayButton.addEventListener("click", () => {
+      currentView = "today";
+      renderCurrentView();
+    });
+
+    navHistoryButton.addEventListener("click", () => {
+      window.location.href = "history.html";
+    });
+
+    newButton.addEventListener("click", () => {
+      sessionStorage.setItem("open-new-page-at-top", "true");
+      window.location.href = "new.html";
+    });
+
+    reminderDoneButton.addEventListener("click", () => {
+      if (activeReminderHabitId) {
+        setHabitDoneToday(activeReminderHabitId, true);
+      }
+
+      reminderDialog.close();
+      renderCurrentView();
+    });
+
+    reminderCloseButton.addEventListener("click", () => {
+      reminderDialog.close();
+    });
+
+    renderCurrentView();
+    startHabitReminders();
+  </script>
+</body>
+</html>

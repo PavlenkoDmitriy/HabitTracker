@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habit Form</title>
+  <style>
+    :root {
+      --page-bg: #0b0b0d;
+      --screen-bg: #f7f7f6;
+      --card-bg: #fffdfa;
+      --text: #323641;
+      --muted: #96a4b0;
+      --accent: #6666b8;
+      --field-border: #adb8b8;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background:
+        linear-gradient(
+          90deg,
+          #cfd4db 0,
+          #cfd4db calc(50% - min(380px, 50vw)),
+          var(--screen-bg) calc(50% - min(380px, 50vw)),
+          var(--screen-bg) calc(50% + min(380px, 50vw)),
+          #cfd4db calc(50% + min(380px, 50vw)),
+          #cfd4db 100%
+        );
+      overscroll-behavior-y: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: transparent;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      padding: 0;
+      overscroll-behavior-y: none;
+    }
+
+    .phone {
+      width: min(760px, 100vw);
+      min-height: 100vh;
+      background: var(--screen-bg);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 28px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .submit-button,
+    .delete-button,
+    .back-link {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 34px;
+      padding: 34px 18px 22px;
+      box-shadow: 0 6px 20px rgba(102, 102, 184, 0.05);
+      text-align: center;
+    }
+
+    .icon-trigger {
+      width: 136px;
+      height: 136px;
+      border: 0;
+      border-radius: 50%;
+      background: #b8c2c7;
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      margin: 0 auto 14px;
+      font-size: 46px;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .icon-label {
+      margin: -2px 0 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .icon-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .icon-grid.is-open {
+      display: grid;
+    }
+
+    .icon-choice input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .icon-choice span {
+      display: block;
+      border: 2px solid #c9d0d6;
+      border-radius: 18px;
+      padding: 10px 0;
+      background: #ffffff;
+      font-size: 26px;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    }
+
+    .icon-choice input:checked + span {
+      border-color: var(--accent);
+    }
+
+    .field {
+      margin-top: 18px;
+      position: relative;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      border: 4px solid var(--field-border);
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 15px 18px;
+      font-size: 16px;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .field.with-icon input {
+      padding-left: 56px;
+    }
+
+    .field-icon {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      width: 24px;
+      height: 24px;
+      transform: translateY(-50%);
+      color: #9aa7b2;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .field-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .frequency-row {
+      margin-top: 18px;
+    }
+
+    .frequency-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      position: relative;
+      padding: 18px 16px;
+      border: 4px solid var(--field-border);
+      border-radius: 32px;
+      background: #ffffff;
+    }
+
+    .frequency-value-column {
+      position: relative;
+      border-right: 1px solid #eceef0;
+      padding-right: 6px;
+    }
+
+    .frequency-value-column::before,
+    .frequency-value-column::after {
+      content: "-";
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8f97a1;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .frequency-value-column::before {
+      left: calc(50% - 52px);
+    }
+
+    .frequency-value-column::after {
+      left: calc(50% + 30px);
+    }
+
+    .wheel {
+      position: relative;
+      height: 240px;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      overscroll-behavior: contain;
+      touch-action: none;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 96px 0;
+      cursor: grab;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98) 0%,
+          rgba(255, 255, 255, 0.92) 18%,
+          rgba(255, 255, 255, 0.2) 38%,
+          rgba(255, 255, 255, 0.2) 62%,
+          rgba(255, 255, 255, 0.92) 82%,
+          rgba(255, 255, 255, 0.98) 100%
+        );
+    }
+
+    .wheel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .wheel.is-dragging {
+      cursor: grabbing;
+      scroll-snap-type: none;
+      user-select: none;
+    }
+
+    .wheel::after {
+      content: "";
+      position: sticky;
+      top: 96px;
+      display: block;
+      height: 48px;
+      margin-bottom: -48px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .wheel-option {
+      height: 48px;
+      display: grid;
+      place-items: center;
+      scroll-snap-align: center;
+      font-size: 30px;
+      font-weight: 300;
+      color: #c7cbd0;
+      transition: color 120ms ease, opacity 120ms ease, transform 120ms ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .wheel-option.is-selected {
+      color: #111111;
+      font-size: 34px;
+      transform: scale(1.02);
+    }
+
+    .wheel-option.is-near {
+      color: #b4b8bd;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .frequency-hint {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 15px;
+      text-align: left;
+    }
+
+    .frequency-value-column .wheel-option {
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .frequency-unit-column .wheel-option {
+      font-size: 24px;
+    }
+
+    .frequency-unit-column .wheel-option.is-selected {
+      font-size: 27px;
+    }
+
+    .frequency-unit-column {
+      position: relative;
+      padding-left: 6px;
+    }
+
+    .frequency-unit-column::before,
+    .frequency-unit-column::after {
+      content: "-";
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8f97a1;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .frequency-unit-column::before {
+      left: calc(50% - 64px);
+    }
+
+    .frequency-unit-column::after {
+      left: calc(50% + 60px);
+    }
+
+    .frequency-field {
+      margin-top: 18px;
+    }
+
+    .submit-button {
+      width: 100%;
+      background: var(--accent);
+      color: #ffffff;
+      border-radius: 28px;
+      padding: 18px 20px;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 22px;
+    }
+
+    .delete-button {
+      width: 100%;
+      background: #ece7e7;
+      color: #a74f4f;
+      border-radius: 28px;
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    .message {
+      min-height: 22px;
+      margin: 0;
+      text-align: center;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .back-link {
+      text-align: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+      }
+
+      .phone {
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <div class="topbar">
+      <h1 class="brand">Habit Tracker</h1>
+    </div>
+
+    <form id="new-habit-form" class="card">
+      <h2 id="page-title">Add New Habit</h2>
+
+      <button class="icon-trigger" id="icon-trigger" type="button" aria-expanded="false" aria-controls="icon-grid">
+        <span id="icon-preview">★</span>
+      </button>
+      <p class="icon-label">Choose icon</p>
+
+      <div class="icon-grid" id="icon-grid">
+        <label class="icon-choice">
+          <input type="radio" name="icon" value="💧" required>
+          <span>💧</span>
+        </label>
+        <label class="icon-choice">
+          <input type="radio" name="icon" value="💪">
+          <span>💪</span>
+        </label>
+        <label class="icon-choice">
+          <input type="radio" name="icon" value="📚">
+          <span>📚</span>
+        </label>
+        <label class="icon-choice">
+          <input type="radio" name="icon" value="🧘">
+          <span>🧘</span>
+        </label>
+        <label class="icon-choice">
+          <input type="radio" name="icon" value="🍎">
+          <span>🍎</span>
+        </label>
+        <label class="icon-choice">
+          <input type="radio" name="icon" value="📝">
+          <span>📝</span>
+        </label>
+      </div>
+
+      <div class="field with-icon">
+        <span class="field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="8" r="4.5" fill="currentColor"/>
+            <path d="M4 19.5C4.9 15.9 7.9 14 12 14C16.1 14 19.1 15.9 20 19.5" fill="currentColor"/>
+          </svg>
+        </span>
+        <input id="habit-name" name="habit-name" type="text" placeholder="Habit name" required>
+      </div>
+
+      <div class="field with-icon">
+        <span class="field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3.5H14L18 7.5V19.5C18 20.6 17.1 21.5 16 21.5H6C4.9 21.5 4 20.6 4 19.5V5.5C4 4.4 4.9 3.5 6 3.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 11H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M15.5 14.5L18.5 11.5L20.5 13.5L17.5 16.5L14.5 17.2L15.5 14.5Z" fill="currentColor"/>
+          </svg>
+        </span>
+        <input id="habit-description" name="habit-description" type="text" placeholder="Description (optional)">
+      </div>
+
+      <div class="field frequency-field">
+        <p class="frequency-hint">Choose frequency</p>
+        <div class="frequency-picker">
+          <div class="frequency-value-column">
+            <div class="wheel" id="frequency-value-wheel" aria-label="Frequency value"></div>
+          </div>
+          <div class="frequency-unit-column">
+            <div class="wheel" id="frequency-unit-wheel" aria-label="Frequency unit"></div>
+          </div>
+        </div>
+        <div class="visually-hidden">
+          <input id="frequency-value" name="frequency-value" type="number" min="1" step="1" value="1" required>
+          <select id="frequency-unit" name="frequency-unit">
+            <option value="minutes" selected>Minutes</option>
+            <option value="hours">Hours</option>
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="submit-button" id="submit-button" type="submit">Create Habit</button>
+      <button class="delete-button" id="delete-button" type="button" hidden>Delete Habit</button>
+    </form>
+
+    <p class="message" id="message"></p>
+    <a class="back-link" href="index.html">Back to habits</a>
+  </main>
+
+  <script>
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    function scrollPageToTop() {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+
+    document.addEventListener("DOMContentLoaded", scrollPageToTop);
+    window.addEventListener("load", () => {
+      scrollPageToTop();
+      window.requestAnimationFrame(scrollPageToTop);
+    });
+    window.addEventListener("pageshow", () => {
+      scrollPageToTop();
+      window.requestAnimationFrame(scrollPageToTop);
+    });
+
+    if (sessionStorage.getItem("open-new-page-at-top") === "true") {
+      sessionStorage.removeItem("open-new-page-at-top");
+      scrollPageToTop();
+      window.requestAnimationFrame(scrollPageToTop);
+    }
+
+    const defaultHabits = [];
+
+    const form = document.getElementById("new-habit-form");
+    const message = document.getElementById("message");
+    const pageTitle = document.getElementById("page-title");
+    const submitButton = document.getElementById("submit-button");
+    const deleteButton = document.getElementById("delete-button");
+    const iconPreview = document.getElementById("icon-preview");
+    const iconTrigger = document.getElementById("icon-trigger");
+    const iconGrid = document.getElementById("icon-grid");
+    const frequencyValueInput = document.getElementById("frequency-value");
+    const frequencyUnitInput = document.getElementById("frequency-unit");
+    const frequencyValueWheel = document.getElementById("frequency-value-wheel");
+    const frequencyUnitWheel = document.getElementById("frequency-unit-wheel");
+    const removedSeedHabitNames = [
+      "Drink water",
+      "Read 20 minutes",
+      "Workout",
+      "Plan the day"
+    ];
+    const editHabitId = new URLSearchParams(window.location.search).get("id");
+    const frequencyValueOptions = Array.from({ length: 60 }, (_, index) => index + 1);
+    const frequencyUnitOptions = [
+      { value: "minutes", label: "Minutes" },
+      { value: "hours", label: "Hours" },
+      { value: "days", label: "Days" },
+      { value: "weeks", label: "Weeks" }
+    ];
+
+    function formatWheelValue(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function updateWheelStyles(wheel, selectedOption) {
+      const options = Array.from(wheel.querySelectorAll(".wheel-option"));
+      const selectedIndex = options.indexOf(selectedOption);
+
+      options.forEach((option, index) => {
+        option.classList.toggle("is-selected", index === selectedIndex);
+        option.classList.toggle("is-near", Math.abs(index - selectedIndex) === 1);
+      });
+    }
+
+    function getClosestWheelOption(wheel) {
+      const options = Array.from(wheel.querySelectorAll(".wheel-option"));
+      const wheelCenter = wheel.scrollTop + wheel.clientHeight / 2;
+      let closestOption = options[0];
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      options.forEach((option) => {
+        const optionCenter = option.offsetTop + option.offsetHeight / 2;
+        const distance = Math.abs(optionCenter - wheelCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestOption = option;
+        }
+      });
+
+      return closestOption;
+    }
+
+    function scrollWheelToOption(wheel, option, behavior) {
+      if (!option) {
+        return;
+      }
+
+      const targetTop = option.offsetTop - (wheel.clientHeight - option.offsetHeight) / 2;
+      wheel.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: behavior
+      });
+    }
+
+    function selectWheelOption(wheel, option, shouldScroll) {
+      if (!option) {
+        return;
+      }
+
+      wheel.dataset.selectedValue = option.dataset.value;
+      updateWheelStyles(wheel, option);
+
+      if (wheel === frequencyValueWheel) {
+        frequencyValueInput.value = option.dataset.value;
+      } else if (wheel === frequencyUnitWheel) {
+        frequencyUnitInput.value = option.dataset.value;
+      }
+
+      if (shouldScroll) {
+        scrollWheelToOption(wheel, option, "smooth");
+      }
+    }
+
+    function bindWheelSelection(wheel) {
+      let scrollTimeoutId = null;
+      let momentumFrameId = null;
+      let isPointerDown = false;
+      let lastPointerY = 0;
+      let lastTimestamp = 0;
+      let velocity = 0;
+      const dragMultiplier = wheel === frequencyValueWheel ? 1.3 : 1;
+      const momentumMultiplier = wheel === frequencyValueWheel ? 22 : 18;
+      const maxVelocity = wheel === frequencyValueWheel ? 30 : 24;
+      const decay = wheel === frequencyValueWheel ? 0.95 : 0.94;
+
+      function stopMomentum() {
+        if (momentumFrameId) {
+          window.cancelAnimationFrame(momentumFrameId);
+          momentumFrameId = null;
+        }
+      }
+
+      function settleWheel() {
+        selectWheelOption(wheel, getClosestWheelOption(wheel), true);
+      }
+
+      function startMomentum() {
+        stopMomentum();
+
+        function step() {
+          velocity *= decay;
+
+          if (Math.abs(velocity) < 0.2) {
+            momentumFrameId = null;
+            settleWheel();
+            return;
+          }
+
+          wheel.scrollTop -= velocity;
+          momentumFrameId = window.requestAnimationFrame(step);
+        }
+
+        momentumFrameId = window.requestAnimationFrame(step);
+      }
+
+      wheel.addEventListener("scroll", () => {
+        window.clearTimeout(scrollTimeoutId);
+        scrollTimeoutId = window.setTimeout(() => {
+          if (!isPointerDown && !momentumFrameId) {
+            settleWheel();
+          }
+        }, 80);
+      });
+
+      wheel.addEventListener("pointerdown", (event) => {
+        isPointerDown = true;
+        lastPointerY = event.clientY;
+        lastTimestamp = event.timeStamp;
+        velocity = 0;
+        stopMomentum();
+        wheel.classList.add("is-dragging");
+        wheel.setPointerCapture(event.pointerId);
+      });
+
+      wheel.addEventListener("pointermove", (event) => {
+        if (!isPointerDown) {
+          return;
+        }
+
+        const deltaY = event.clientY - lastPointerY;
+        const deltaTime = Math.max(event.timeStamp - lastTimestamp, 1);
+
+        wheel.scrollTop -= deltaY * dragMultiplier;
+        velocity = deltaY / deltaTime * momentumMultiplier;
+        lastPointerY = event.clientY;
+        lastTimestamp = event.timeStamp;
+      });
+
+      function finishPointerDrag(event) {
+        if (!isPointerDown) {
+          return;
+        }
+
+        isPointerDown = false;
+        wheel.classList.remove("is-dragging");
+        velocity = Math.max(Math.min(velocity, maxVelocity), -maxVelocity);
+
+        if (wheel.hasPointerCapture(event.pointerId)) {
+          wheel.releasePointerCapture(event.pointerId);
+        }
+
+        if (Math.abs(velocity) > 0.8) {
+          startMomentum();
+        } else {
+          settleWheel();
+        }
+      }
+
+      wheel.addEventListener("pointerup", finishPointerDrag);
+      wheel.addEventListener("pointercancel", finishPointerDrag);
+    }
+
+    function createWheelOption(value, label) {
+      const option = document.createElement("div");
+      option.className = "wheel-option";
+      option.dataset.value = String(value);
+      option.textContent = label;
+      return option;
+    }
+
+    function buildWheel(wheel, items, selectedValue, formatLabel) {
+      wheel.innerHTML = "";
+
+      items.forEach((item) => {
+        const value = typeof item === "object" ? item.value : item;
+        const label = typeof item === "object" ? item.label : formatLabel(item);
+        const option = createWheelOption(value, label);
+
+        option.addEventListener("click", () => {
+          selectWheelOption(wheel, option, true);
+        });
+
+        wheel.appendChild(option);
+      });
+
+      const initialOption =
+        Array.from(wheel.querySelectorAll(".wheel-option")).find((option) => option.dataset.value === String(selectedValue)) ||
+        wheel.querySelector(".wheel-option");
+
+      selectWheelOption(wheel, initialOption, false);
+
+      window.requestAnimationFrame(() => {
+        scrollWheelToOption(wheel, initialOption, "auto");
+      });
+    }
+
+    function loadHabits() {
+      const storedHabits = localStorage.getItem("habits");
+
+      if (!storedHabits) {
+        return defaultHabits;
+      }
+
+      try {
+        const parsedHabits = JSON.parse(storedHabits);
+        const filteredHabits = parsedHabits.filter((habit) => !removedSeedHabitNames.includes(habit.name));
+
+        if (filteredHabits.length !== parsedHabits.length) {
+          localStorage.setItem("habits", JSON.stringify(filteredHabits));
+        }
+
+        return filteredHabits;
+      } catch (error) {
+        return defaultHabits;
+      }
+    }
+
+    function findHabitById(habitId) {
+      const habits = loadHabits();
+      return habits.find((habit) => habit.id === habitId) || null;
+    }
+
+    function fillFormForEdit(habit) {
+      pageTitle.textContent = "Edit Habit";
+      submitButton.textContent = "Save";
+      deleteButton.hidden = false;
+      document.getElementById("habit-name").value = habit.name || "";
+      document.getElementById("habit-description").value = habit.description || "";
+      buildWheel(frequencyValueWheel, frequencyValueOptions, habit.frequencyValue || 1, formatWheelValue);
+      buildWheel(frequencyUnitWheel, frequencyUnitOptions, habit.frequencyUnit || "days", (value) => value);
+
+      const iconInput = document.querySelector('input[name="icon"][value="' + habit.icon + '"]');
+
+      if (iconInput) {
+        iconInput.checked = true;
+        iconPreview.textContent = habit.icon;
+      }
+    }
+
+    document.querySelectorAll('input[name="icon"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        iconPreview.textContent = input.value;
+        iconGrid.classList.remove("is-open");
+        iconTrigger.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    iconTrigger.addEventListener("click", () => {
+      const isOpen = iconGrid.classList.toggle("is-open");
+      iconTrigger.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    bindWheelSelection(frequencyValueWheel);
+    bindWheelSelection(frequencyUnitWheel);
+    buildWheel(frequencyValueWheel, frequencyValueOptions, 1, formatWheelValue);
+    buildWheel(frequencyUnitWheel, frequencyUnitOptions, "minutes", (value) => value);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const icon = formData.get("icon");
+      const name = formData.get("habit-name").trim();
+      const description = formData.get("habit-description").trim();
+      const frequencyValue = Number(formData.get("frequency-value"));
+      const frequencyUnit = formData.get("frequency-unit");
+
+      if (!icon) {
+        message.textContent = "Please choose an icon.";
+        return;
+      }
+
+      if (!name) {
+        message.textContent = "Please enter a habit name.";
+        return;
+      }
+
+      if (!Number.isInteger(frequencyValue) || frequencyValue < 1) {
+        message.textContent = "Please enter a valid interval.";
+        return;
+      }
+
+      const habits = loadHabits();
+      const existingHabitIndex = habits.findIndex((habit) => habit.id === editHabitId);
+
+      if (existingHabitIndex >= 0) {
+        habits[existingHabitIndex] = {
+          ...habits[existingHabitIndex],
+          icon: icon,
+          name: name,
+          description: description,
+          frequencyValue: frequencyValue,
+          frequencyUnit: frequencyUnit
+        };
+      } else {
+        habits.push({
+          id: "habit-" + Date.now(),
+          icon: icon,
+          name: name,
+          description: description,
+          frequencyValue: frequencyValue,
+          frequencyUnit: frequencyUnit
+        });
+      }
+
+      localStorage.setItem("habits", JSON.stringify(habits));
+      message.textContent = existingHabitIndex >= 0
+        ? "Habit updated. Redirecting to all habits..."
+        : "Habit created. Redirecting to all habits...";
+
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 700);
+    });
+
+    deleteButton.addEventListener("click", () => {
+      if (!editHabitId) {
+        return;
+      }
+
+      const habits = loadHabits();
+      const filteredHabits = habits.filter((habit) => habit.id !== editHabitId);
+
+      localStorage.setItem("habits", JSON.stringify(filteredHabits));
+      message.textContent = "Habit deleted. Redirecting to all habits...";
+
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 700);
+    });
+
+    if (editHabitId) {
+      const habitToEdit = findHabitById(editHabitId);
+
+      if (habitToEdit) {
+        fillFormForEdit(habitToEdit);
+      } else {
+        message.textContent = "Habit not found.";
+      }
+    }
+  </script>
+</body>
+</html>
