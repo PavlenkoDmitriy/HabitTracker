@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Habit Form</title>
+  <title>Форма звички</title>
   <style>
     :root {
       --page-bg: #0b0b0d;
@@ -410,16 +410,16 @@
 <body>
   <main class="phone">
     <div class="topbar">
-      <h1 class="brand">Habit Tracker</h1>
+      <h1 class="brand">Трекер звичок</h1>
     </div>
 
     <form id="new-habit-form" class="card">
-      <h2 id="page-title">Add New Habit</h2>
+      <h2 id="page-title">Додати нову звичку</h2>
 
       <button class="icon-trigger" id="icon-trigger" type="button" aria-expanded="false" aria-controls="icon-grid">
         <span id="icon-preview">★</span>
       </button>
-      <p class="icon-label">Choose icon</p>
+      <p class="icon-label">Оберіть іконку</p>
 
       <div class="icon-grid" id="icon-grid">
         <label class="icon-choice">
@@ -455,7 +455,7 @@
             <path d="M4 19.5C4.9 15.9 7.9 14 12 14C16.1 14 19.1 15.9 20 19.5" fill="currentColor"/>
           </svg>
         </span>
-        <input id="habit-name" name="habit-name" type="text" placeholder="Habit name" required>
+        <input id="habit-name" name="habit-name" type="text" placeholder="Назва звички" required>
       </div>
 
       <div class="field with-icon">
@@ -468,36 +468,36 @@
             <path d="M15.5 14.5L18.5 11.5L20.5 13.5L17.5 16.5L14.5 17.2L15.5 14.5Z" fill="currentColor"/>
           </svg>
         </span>
-        <input id="habit-description" name="habit-description" type="text" placeholder="Description (optional)">
+        <input id="habit-description" name="habit-description" type="text" placeholder="Опис (необов’язково)">
       </div>
 
       <div class="field frequency-field">
-        <p class="frequency-hint">Choose frequency</p>
+        <p class="frequency-hint">Оберіть частоту</p>
         <div class="frequency-picker">
           <div class="frequency-value-column">
-            <div class="wheel" id="frequency-value-wheel" aria-label="Frequency value"></div>
+            <div class="wheel" id="frequency-value-wheel" aria-label="Значення частоти"></div>
           </div>
           <div class="frequency-unit-column">
-            <div class="wheel" id="frequency-unit-wheel" aria-label="Frequency unit"></div>
+            <div class="wheel" id="frequency-unit-wheel" aria-label="Одиниця частоти"></div>
           </div>
         </div>
         <div class="visually-hidden">
           <input id="frequency-value" name="frequency-value" type="number" min="1" step="1" value="1" required>
           <select id="frequency-unit" name="frequency-unit">
-            <option value="minutes" selected>Minutes</option>
-            <option value="hours">Hours</option>
-            <option value="days">Days</option>
-            <option value="weeks">Weeks</option>
+            <option value="minutes" selected>Хвилини</option>
+            <option value="hours">Години</option>
+            <option value="days">Дні</option>
+            <option value="weeks">Тижні</option>
           </select>
         </div>
       </div>
 
-      <button class="submit-button" id="submit-button" type="submit">Create Habit</button>
-      <button class="delete-button" id="delete-button" type="button" hidden>Delete Habit</button>
+      <button class="submit-button" id="submit-button" type="submit">Створити звичку</button>
+      <button class="delete-button" id="delete-button" type="button" hidden>Видалити звичку</button>
     </form>
 
     <p class="message" id="message"></p>
-    <a class="back-link" href="index.html">Back to habits</a>
+    <a class="back-link" href="index.html">Назад до звичок</a>
   </main>
 
   <script>
@@ -550,10 +550,10 @@
     const editHabitId = new URLSearchParams(window.location.search).get("id");
     const frequencyValueOptions = Array.from({ length: 60 }, (_, index) => index + 1);
     const frequencyUnitOptions = [
-      { value: "minutes", label: "Minutes" },
-      { value: "hours", label: "Hours" },
-      { value: "days", label: "Days" },
-      { value: "weeks", label: "Weeks" }
+      { value: "minutes", label: "Хвилини" },
+      { value: "hours", label: "Години" },
+      { value: "days", label: "Дні" },
+      { value: "weeks", label: "Тижні" }
     ];
 
     function formatWheelValue(value) {
@@ -780,8 +780,8 @@
     }
 
     function fillFormForEdit(habit) {
-      pageTitle.textContent = "Edit Habit";
-      submitButton.textContent = "Save";
+      pageTitle.textContent = "Редагувати звичку";
+      submitButton.textContent = "Зберегти";
       deleteButton.hidden = false;
       document.getElementById("habit-name").value = habit.name || "";
       document.getElementById("habit-description").value = habit.description || "";
@@ -825,17 +825,17 @@
       const frequencyUnit = formData.get("frequency-unit");
 
       if (!icon) {
-        message.textContent = "Please choose an icon.";
+        message.textContent = "Будь ласка, оберіть іконку.";
         return;
       }
 
       if (!name) {
-        message.textContent = "Please enter a habit name.";
+        message.textContent = "Будь ласка, введіть назву звички.";
         return;
       }
 
       if (!Number.isInteger(frequencyValue) || frequencyValue < 1) {
-        message.textContent = "Please enter a valid interval.";
+        message.textContent = "Будь ласка, вкажіть коректний інтервал.";
         return;
       }
 
@@ -849,23 +849,26 @@
           name: name,
           description: description,
           frequencyValue: frequencyValue,
-          frequencyUnit: frequencyUnit
+          frequencyUnit: frequencyUnit,
+          reminderStartAt: Date.now()
         };
       } else {
         habits.push({
           id: "habit-" + Date.now(),
+          createdAt: Date.now(),
           icon: icon,
           name: name,
           description: description,
           frequencyValue: frequencyValue,
-          frequencyUnit: frequencyUnit
+          frequencyUnit: frequencyUnit,
+          reminderStartAt: Date.now()
         });
       }
 
       localStorage.setItem("habits", JSON.stringify(habits));
       message.textContent = existingHabitIndex >= 0
-        ? "Habit updated. Redirecting to all habits..."
-        : "Habit created. Redirecting to all habits...";
+        ? "Звичку оновлено. Переходимо до списку звичок..."
+        : "Звичку створено. Переходимо до списку звичок...";
 
       setTimeout(() => {
         window.location.href = "index.html";
@@ -881,7 +884,7 @@
       const filteredHabits = habits.filter((habit) => habit.id !== editHabitId);
 
       localStorage.setItem("habits", JSON.stringify(filteredHabits));
-      message.textContent = "Habit deleted. Redirecting to all habits...";
+      message.textContent = "Звичку видалено. Переходимо до списку звичок...";
 
       setTimeout(() => {
         window.location.href = "index.html";
@@ -894,7 +897,7 @@
       if (habitToEdit) {
         fillFormForEdit(habitToEdit);
       } else {
-        message.textContent = "Habit not found.";
+        message.textContent = "Звичку не знайдено.";
       }
     }
   </script>
